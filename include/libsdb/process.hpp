@@ -5,6 +5,7 @@
 #include <memory>
 #include <sys/types.h>
 #include <cstdint>
+#include <optional>
 
 #include <libsdb/registers.hpp>
 
@@ -24,7 +25,9 @@ namespace sdb {
 
 	class process {
 		public:
-			static std::unique_ptr<process> launch(std::filesystem::path path, bool debug = true);
+			static std::unique_ptr<process> launch(std::filesystem::path path,
+					bool debug = true,
+					  std::optional<int> stdout_replacement = std::nullopt);
 			static std::unique_ptr<process> attach(pid_t pid);
 			void resume();
 			stop_reason wait_on_signal();

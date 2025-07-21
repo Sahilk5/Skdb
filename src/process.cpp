@@ -32,7 +32,8 @@ sdb::stop_reason::stop_reason(int wait_status) {
 
 /* fork() -> Conditional -> ptrace() -> execlp() -> wait_on_signal() */
 std::unique_ptr<sdb::process> sdb::process::launch (
-		std::filesystem::path path, bool debug) {
+		std::filesystem::path path, bool debug,
+		  std::optional<int> stdout_replacement) {
 	pipe channel(true);
 	pid_t pid = 0;
 	
@@ -43,6 +44,13 @@ std::unique_ptr<sdb::process> sdb::process::launch (
 	/* I am a child */
 	if (pid == 0) {
 		channel.close_read();
+
+		if (stdout_replacement) {
+			if (dup2(*stdout_replacement, STDOUT_FILENO) < 0) {
+				exit_with_perror(channel, "stdout replacement failed");
+			}
+		}
+
 		if (debug and ptrace(PTRACE_TRACEME, 0, nullptr, nullptr) < 0) {
 			exit_with_perror(channel, "Tracing failed");
 		}
