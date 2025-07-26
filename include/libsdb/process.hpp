@@ -34,6 +34,7 @@ namespace sdb {
 			static std::unique_ptr<process> attach(pid_t pid);
 			void resume();
 			stop_reason wait_on_signal();
+			stop_reason step_instruction();
 			pid_t pid() const {return pid_;}
 
 			process() = delete;
@@ -54,6 +55,10 @@ namespace sdb {
 				return virt_addr{
 					get_registers().read_by_id_as<std::uint64_t>(register_id::rip)
 				};
+			}
+
+			void set_pc(virt_addr address) {
+				get_registers().write_by_id(register_id::rip, address.addr());
 			}
 
 			breakpoint_site& create_breakpoint_site(virt_addr address);
