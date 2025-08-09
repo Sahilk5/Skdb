@@ -62,7 +62,10 @@ namespace sdb {
 				get_registers().write_by_id(register_id::rip, address.addr());
 			}
 
-			breakpoint_site& create_breakpoint_site(virt_addr address);
+			breakpoint_site& create_breakpoint_site(
+					virt_addr address,
+					bool hardware = false,
+					bool internal = false);
 			stoppoint_collection<breakpoint_site>& breakpoint_sites () {return breakpoint_sites_;}
 			const stoppoint_collection<breakpoint_site>& breakpoint_sites() const {
 				return breakpoint_sites_;
@@ -77,6 +80,10 @@ namespace sdb {
 					return from_bytes<T>(data.data());
 				}
 
+			int set_hardware_breakpoint(
+					breakpoint_site::id_type id, virt_addr address);
+			void clear_hardware_stoppoint(int index);
+
 		private:
 			process(pid_t pid, bool terminate_on_end, bool is_attached)
 				: pid_(pid), terminate_on_end_(terminate_on_end), is_attached_(is_attached),
@@ -88,6 +95,9 @@ namespace sdb {
 			bool is_attached_ = true;
 			std::unique_ptr<registers> registers_;
 			stoppoint_collection<breakpoint_site> breakpoint_sites_;
+			
+			int set_hardware_stoppoint(
+					virt_addr address, stoppoint_mode mode, std::size_t size);
 	};
 }
 
