@@ -349,6 +349,65 @@ namespace {
 		print_disassembly(process, address, n_instructions);
 	}
 
+	void handle_watchpoint_list(sdb::process& process,
+			const std::vector<std::string>& args) {
+		auto stoppoint_mode_to_string = [](auto mode) {
+			switch (mode) {
+				case sdb::stoppoint_mode::execute: return "execute";
+				case sdb::stoppoint_mode::write: return "write";
+				case sdb::stoppoint_mode::read_write: return "read_write";
+				default: sdb::error::send("Invalid stoppoint mode");
+			}
+		};
+
+		if (process.watchpoints.empty()) {
+			fmt::print("No watchpoints set\n");
+		} else {
+			fmt::print("Current watchpoints:\n");
+		}
+	}
+
+	void handle_watchpoint_command(sdb::process& process,
+			const std::vector<std::string>& args) {
+		if (args.size() < 2) {
+			print_help({ "help", "watchpoint" });
+			return;
+		}
+
+		auto command = args[1];
+
+		if (is_prefix(command, "list")) {
+			handle_watchpoint_list(process, args);
+			return;
+		}
+
+		if (is_prefix(command, "set")) {
+			handle_watchpoint_set(process, args);
+			return;
+		}
+
+		if (args.size() < 3) {
+			print_help({ "help", "watchpoint" });
+			return;
+		}
+
+		auto id = sdb::to_integral<sdb::watchpoint::id_type>(args[2]);
+		if (!id) {
+			std::cerr << "Command expects watchpoint id";
+			return;
+		}
+
+		if (is_prefix(command, "enable")) {
+			process.watchpoints().get_by_id(*id).enable();
+		}
+		else if (is_prefix(command, "disable")) {
+			process.watchpoints().get_by_id(*id).disable();
+		}
+		else if (is_prefix(command, "delete")) {
+			process.watchpoints().remove_by_id(*id);
+		}
+	}
+
 	void handle_command(std::unique_ptr<sdb::process>& process, std::string_view line) {
 		auto args = split(line, ' ');
 		auto command = args[0];
@@ -370,6 +429,8 @@ namespace {
                         handle_memory_command(*process, args);
 		} else if (is_prefix(command, "disassemble")) {
 			handle_disassemble_command(*process, args);
+		} else if (is_prefix(command, "watchpoint")) {
+			handle_watchpoint_command(*process, args);
 		} else {
 			std::cerr<<"Unknown command\n";
 		}

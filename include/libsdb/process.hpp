@@ -12,6 +12,7 @@
 #include <libsdb/registers.hpp>
 #include <libsdb/stoppoint_collection.hpp>
 #include <libsdb/bit.hpp>
+#include <libsdb/watchpoint.hpp>
 
 namespace sdb {
 	enum class process_state {
@@ -71,6 +72,15 @@ namespace sdb {
 				return breakpoint_sites_;
 			}
 
+			watchpoint& create_watchpoint(virt_addr address, stoppoint_mode mode, std::size_t size);
+			stoppoint_collection<watchpoint>& watchpoints() {
+				return watchpoints_;
+			}
+
+			const stoppoint_collection<watchpoint>& watchpoints() const {
+				return watchpoints_;
+			}
+
 			std::vector<std::byte> read_memory(virt_addr address, std::size_t amount) const;
 			std::vector<std::byte> read_memory_without_traps(virt_addr address, std::size_t amount) const;
 			void write_memory(virt_addr address, span<const std::byte> data);
@@ -82,6 +92,8 @@ namespace sdb {
 
 			int set_hardware_breakpoint(
 					breakpoint_site::id_type id, virt_addr address);
+			int set_watchpoint(watchpoint::id_type id, virt_addr address,
+					stoppoint_mode mode, std::size_t size);
 			void clear_hardware_stoppoint(int index);
 
 		private:
@@ -95,6 +107,7 @@ namespace sdb {
 			bool is_attached_ = true;
 			std::unique_ptr<registers> registers_;
 			stoppoint_collection<breakpoint_site> breakpoint_sites_;
+			stoppoint_collection<watchpoint> watchpoints_;
 			
 			int set_hardware_stoppoint(
 					virt_addr address, stoppoint_mode mode, std::size_t size);
